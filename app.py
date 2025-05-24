@@ -1,58 +1,61 @@
 import streamlit as st
-import sympy as sp
-import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+import sympy as sp
 
-# Judul
-st.title(" Diagram Analisi penjualan cilok ")
+# Judul halaman
+st.title("🌶️ Analisis Penjualan Cilok")
 
-# Definisi simbolik
-M, P = sp.symbols('M P')  # M = Modal, P = Pendapatan
-K = P - M  # Fungsi Keuntungan
+# Input modal dan pendapatan harian
+modal = st.number_input("💸 Masukkan Modal Harian (Rp)", value=50000)
+pendapatan = st.number_input("💰 Masukkan Pendapatan Harian (Rp)", value=200000)
 
-# Tampilkan fungsi dan turunannya
-st.latex(r"K(M, P) = P - M")
+# Hitung keuntungan
+keuntungan = pendapatan - modal
+st.success(f"🧾 Keuntungan Harian: Rp {keuntungan:,}")
+
+# Simbolik (gunakan SymPy)
+M, P = sp.symbols('M P')
+K = P - M
 dK_dM = sp.diff(K, M)
 dK_dP = sp.diff(K, P)
+
+st.subheader("📐 Fungsi Keuntungan dan Turunan Parsial")
+st.latex(r"K(M, P) = P - M")
 st.latex(r"\frac{\partial K}{\partial M} = " + sp.latex(dK_dM))
 st.latex(r"\frac{\partial K}{\partial P} = " + sp.latex(dK_dP))
 
-# Input user
-modal_input = st.number_input("Masukkan Modal (Rp)", value=50000)
-pendapatan_input = st.number_input("Masukkan Pendapatan (Rp)", value=200000)
+# Simulasi data keuntungan mingguan (7 hari)
+hari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
+pendapatan_mingguan = [pendapatan + i*5000 for i in range(7)]
+modal_mingguan = [modal]*7
+keuntungan_mingguan = [p - m for p, m in zip(pendapatan_mingguan, modal_mingguan)]
 
-# Hitung nilai fungsi dan gradient
-K_val = K.subs({M: modal_input, P: pendapatan_input})
-dK_dM_val = dK_dM.subs({M: modal_input, P: pendapatan_input})
-dK_dP_val = dK_dP.subs({M: modal_input, P: pendapatan_input})
+# Buat DataFrame
+df = pd.DataFrame({
+    'Hari': hari,
+    'Modal': modal_mingguan,
+    'Pendapatan': pendapatan_mingguan,
+    'Keuntungan': keuntungan_mingguan
+})
 
-# Tampilkan hasil
-st.write(f"### 💰 Keuntungan: Rp{K_val:,}")
-st.write(f"Gradient di titik ini: (∂K/∂M = {dK_dM_val}, ∂K/∂P = {dK_dP_val})")
+# Diagram batang
+st.subheader("📊 Diagram Batang Keuntungan Harian")
+fig1, ax1 = plt.subplots()
+ax1.bar(df['Hari'], df['Keuntungan'], color='green')
+ax1.set_ylabel("Rp")
+ax1.set_title("Keuntungan Harian")
+st.pyplot(fig1)
 
-# ----- GRAFIK 3D -----
-st.subheader("📈 Grafik Permukaan Keuntungan dan Bidang Singgung")
+# Diagram garis
+st.subheader("📈 Grafik Pertumbuhan Keuntungan Mingguan")
+fig2, ax2 = plt.subplots()
+ax2.plot(df['Hari'], df['Keuntungan'], marker='o', linestyle='-', color='blue', label='Keuntungan')
+ax2.set_ylabel("Rp")
+ax2.set_title("Pertumbuhan Keuntungan")
+ax2.grid(True)
+st.pyplot(fig2)
 
-# Mesh grid
-modal_range = np.linspace(modal_input - 30000, modal_input + 30000, 50)
-pendapatan_range = np.linspace(pendapatan_input - 80000, pendapatan_input + 80000, 50)
-M_vals, P_vals = np.meshgrid(modal_range, pendapatan_range)
-
-# Fungsi numerik dan bidang singgung
-K_func = sp.lambdify((M, P), K, 'numpy')
-Z = K_func(M_vals, P_vals)
-Z_tangent = float(K_val) + float(dK_dM_val)*(M_vals - modal_input) + float(dK_dP_val)*(P_vals - pendapatan_input)
-
-# Plot
-fig = plt.figure(figsize=(10, 6))
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(M_vals, P_vals, Z, cmap='viridis', alpha=0.7, label='Permukaan')
-ax.plot_surface(M_vals, P_vals, Z_tangent, color='red', alpha=0.5, label='Bidang Singgung')
-ax.scatter(modal_input, pendapatan_input, float(K_val), color='black', s=50, label='Titik')
-
-ax.set_title("Permukaan Keuntungan K(M, P)")
-ax.set_xlabel("Modal (Rp)")
-ax.set_ylabel("Pendapatan (Rp)")
-ax.set_zlabel("Keuntungan (Rp)")
-
-st.pyplot(fig)
+# Tampilkan tabel
+st.subheader("📋 Data Mingguan")
+st.dataframe(df)
