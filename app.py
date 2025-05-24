@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 import sympy as sp
 
 # Judul halaman
-st.title("🌶️ Analisis Penjualan Cilok")
+st.title("Analisis Penjualan Cilok")
 
 # Input user: Modal & Pendapatan Harian
-modal = st.number_input("💸 Masukkan Modal Harian (Rp)", value=50000)
-pendapatan = st.number_input("💰 Masukkan Pendapatan Harian (Rp)", value=200000)
+modal = st.number_input("Modal Harian (Rp)", value=50000)
+pendapatan = st.number_input("Pendapatan Harian (Rp)", value=200000)
 
 # Konversi ke tipe numerik biasa (untuk hindari error sympy)
 modal = int(modal)
